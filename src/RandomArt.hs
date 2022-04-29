@@ -1,265 +1,188 @@
--- | Based on code by Chris Stone
+{- | CSE 130: Programming Assignment 2
 
-{-# LANGUAGE FlexibleContexts #-}
+     Do not change the skeleton code!
 
-module RandomArt where
+     You may only replace the `error "TBD:..."` parts.
 
-import           Text.Printf (printf)
-import           Control.Exception.Base (assert)
-import           System.Random
-import           System.IO.Unsafe
-import           Control.Monad (forM_)
-import           Control.Monad.ST
-import           Codec.Picture.Png
-import           Codec.Picture.Types
-import qualified Data.Vector.Storable as V
+     For this assignment, you may use the following library functions:
 
---------------------------------------------------------------------------------
--- | A Data Type for Grayscale Expressions -------------------------------------
---------------------------------------------------------------------------------
-data Expr
-  = VarX
-  | VarY
-  | Sine    Expr
-  | Cosine  Expr
-  | Average Expr Expr
-  | Times   Expr Expr
-  | Thresh  Expr Expr Expr Expr
-  deriving (Show)
+     append (++)
+
+ -}
+
+module TailRecursion where
+
+import Prelude hiding (lookup)
 
 --------------------------------------------------------------------------------
--- | Some sample Expressions ---------------------------------------------------
---------------------------------------------------------------------------------
 
-sampleExpr0 :: Expr
-sampleExpr0 = Sine (Average VarX VarY)
+{- | `assoc def key [(k1,v1), (k2,v2), (k3,v3);...])`
 
-sampleExpr1 :: Expr
-sampleExpr1 = Thresh VarX VarY
-                VarX
-                (Times (Sine VarX) (Cosine (Average VarX VarY)))
+     searches the list for the first i such that `ki` = `key`.
+     If such a ki is found, then vi is returned.
+     Otherwise, if no such ki exists in the list, `def` is returned.
 
-sampleExpr2 :: Expr
-sampleExpr2 = Thresh VarX VarY (Sine VarX) (Cosine VarY)
+     ** your function should be tail recursive **
+ -}
 
-sampleExpr3 :: Expr
-sampleExpr3 =
-  Cosine
-    (Sine
-      (Times
-        (Cosine
-          (Average
-            (Cosine VarX)
-            (Times
-              (Cosine
-                (Cosine
-                  (Average
-                    (Times VarY VarY)
-                    (Cosine VarX ))))
-              (Cosine
-                (Times
-                  (Sine (Cosine VarY))
-                  (Average (Sine VarX) (Times VarX VarX)))))))
-        VarY))
-
---------------------------------------------------------------------------------
--- | Printing Expressions as Strings -------------------------------------------
---------------------------------------------------------------------------------
-
--- | `exprToString e` converts an Expr `e` into a `String` representation.
--- >>> exprToString sampleExpr0
--- "sin(pi*((x+y)/2))"
+-- >>> assoc 0 "william" [("ranjit", 85), ("william",23), ("moose",44)])
+-- 23
 --
--- >>> exprToString sampleExpr1
--- "(x<y?x:sin(pi*x)*cos(pi*((x+y)/2)))"
---
--- >>> exprToString sampleExpr2
--- "(x<y?sin(pi*x):cos(pi*y))"
+-- >>> assoc 0 "bob" [("ranjit",85), ("william",23), ("moose",44)]
+-- 0
 
-exprToString :: Expr -> String
-exprToString VarX                 = "x"
-exprToString VarY                 = error "TBD:VarY"
-exprToString (Sine e)             = error "TBD:Sin"
-exprToString (Cosine e)           = error "TBD:Cos"
-exprToString (Average e1 e2)      = error "TBD:Avg"
-exprToString (Times e1 e2)        = error "TBD:Times"
-exprToString (Thresh e1 e2 e3 e4) = error "TBD:Thresh"
+assoc :: Int -> String -> [(String, Int)] -> Int
+assoc def key kvs = loop kvs def key
+    where
+        loop [] def key = def
+        loop (x:xs) def key
+            | (fst x) == key = (snd x)
+            | otherwise = loop xs def key
 
 --------------------------------------------------------------------------------
--- | Evaluating Expressions at a given X, Y co-ordinate ------------------------
---------------------------------------------------------------------------------
+{- | `removeDuplicates l`
 
--- >>> eval  0.5 (-0.5) sampleExpr0
--- 0.0
---
--- >>> eval  0.3 0.3    sampleExpr0
--- 0.8090169943749475
---
--- >>> eval  0.5 0.2    sampleExpr2
--- 0.8090169943749475
+     returns the list of elements of `l` with duplicates
+     that is, second, third ... occurrences, removed,
+     and where the remaining elements appear in the
+     same order as in l.
 
-eval :: Double -> Double -> Expr -> Double
-eval x y e = error "TBD:eval"
+     ** your `helper` should be tail recursive **
 
-evalFn :: Double -> Double -> Expr -> Double
-evalFn x y e = assert (-1.0 <= rv && rv <= 1.0) rv
+     for this problem only, you may use the library functions:
+
+      * elem
+ -}
+
+-- >>> removeDuplicates [1,6,2,4,12,2,13,12,6,9,13]
+-- [1,6,2,4,12,13,9]
+
+removeDuplicates :: [Int] -> [Int]
+removeDuplicates l = reverse (helper [] l)
   where
-    rv       = eval x y e
+    helper :: [Int] -> [Int] -> [Int]
+    helper seen []     = seen
+    helper seen (x:xs) = helper seen' rest'
+      where
+        seen' 
+            | elem x seen = seen
+            | otherwise = [x] ++ seen
+        rest' = xs
 
 --------------------------------------------------------------------------------
--- | Building Expressions ------------------------------------------------------
---------------------------------------------------------------------------------
---
--- >>> buildS 0
--- VarX
---
--- >>> buildS 1
--- VarY
---
--- >>> buildS 2
--- Sine (Average VarY VarX)
+{- | `wwhile f x` returns `x'` where there exist values
 
-buildS :: Int -> Expr
-buildS 0 = VarX
-buildS 1 = VarY
-buildS n = Sine (Average (buildS (n-1)) (buildS (n-2)))
+      `v_0`,...,`v_n` such that
 
+      - `x` is equal to `v_0`
+      - `x'` is equal to `v_n`
+      - for each `i` between `0` and `n-2`, we have `f v_i` equals `(true, v_i+1)`
+      - `f v_n-1` equals `(false, v_n)`.
 
---------------------------------------------------------------------------------
--- | Building Random Expressions -----------------------------------------------
---------------------------------------------------------------------------------
---  `build d` returns an Expr of depth `d`.
---  A call to `rand n` will return a random number between (0..n-1)
---  change and extend the below to produce more interesting expressions
+    ** your function should be tail recursive **
+ -}
 
-build :: Int -> Expr
-build 0
-  | r < 5     = VarX
-  | otherwise = VarY
+-- >>> let f x = let xx = x * x * x in (xx < 100, xx) in wwhile f 2
+-- 512
+
+wwhile :: (a -> (Bool, a)) -> a -> a
+wwhile f n = loop f n
   where
-    r         = rand 10
-build d       = error "TBD:build"
+    boolean :: (a, b) -> a
+    boolean (a, b) = a
+    value:: (a, b) -> b 
+    value (a, b) = b
+    loop :: (a -> (Bool, a)) -> a -> a
+    loop f n =
+      if boolean(f n) == False 
+      then value(f n)
+      else loop f (value(f n))
 
 --------------------------------------------------------------------------------
--- | Best Image "Seeds" --------------------------------------------------------
---------------------------------------------------------------------------------
+{- | The **fixpoint** of a function `f` starting at `x`
 
--- grayscale
-g1, g2, g3 :: (Int, Int)
-g1 = (error "TBD:depth1", error "TBD:seed1")
-g2 = (error "TBD:depth2", error "TBD:seed2")
-g3 = (error "TBD:depth3", error "TBD:seed3")
+`fixpoint f x` returns the FIRST element of the sequence x0, x1, x2, ...
 
+        x0 = x
+        x1 = f x0
+        x2 = f x1
+        x3 = f x2
+        .
+        .
+        .
 
--- color
-c1, c2, c3 :: (Int, Int)
-c1 = (error "TBD:depth1", error "TBD:seed1")
-c2 = (error "TBD:depth2", error "TBD:seed2")
-c3 = (error "TBD:depth3", error "TBD:seed3")
+      such that xn = f x_{n-1}
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
--- DO NOT MODIFY ANY CODE BEYOND THIS POINT
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+      That is,
 
+      `fixpoint f x` should compute `f x` and then
 
---------------------------------------------------------------------------------
--- | Generating GrayScale Images -----------------------------------------------
---------------------------------------------------------------------------------
--- >>> emitRandomGray 150 (3, 12)
-emitRandomGray :: Int -> (Int, Int) -> IO ()
-emitRandomGray size (depth, seed) = do
-  setStdGen (mkStdGen seed)
-  let e    = build depth
-  let file = printf "gray_%d_%d_%d.png" size depth seed
-  emitGray file size e
+      * IF x == f x then the fixpoint is `x`
+      * OTHERWISE, the it is the (recursively computed) fixpoint of `f x`.
 
--- >>> emitGray "sample.png" 150 sampleExpr3
-emitGray :: FilePath -> Int -> Expr -> IO ()
-emitGray file size e = writePng ("img/" ++ file) (imageGray size e)
+ -}
 
--- | `imageGray n e`
---   converts an Expr `e`
---   into an `n * n` grayscale image
-imageGray :: Int -> Expr -> Image Pixel8
-imageGray n e = mkImg n (pixel8 n e)
+{- | Fill in the implementation of `fixpointL f x0` which returns
 
---------------------------------------------------------------------------------
--- | Generating Color Images ---------------------------------------------------
---------------------------------------------------------------------------------
--- >>> emitRandomColor 150 (3, 12)
-emitRandomColor :: Int -> (Int, Int) -> IO ()
-emitRandomColor size (depth, seed) = do
-  setStdGen (mkStdGen seed)
-  let eR   = build depth
-  let eG   = build depth
-  let eB   = build depth
-  let file = printf "color_%d_%d_%d.png" size depth seed
-  emitColor file size eR eG eB
+     the list [x_0, x_1, x_2, x_3, ... , x_n]
 
--- >>> emitColor "sample.png" 150 sampleExpr sampleExpr sampleExpr
-emitColor :: FilePath -> Int -> Expr -> Expr -> Expr -> IO ()
-emitColor file size eR eG eB = writeImg file (imageColor size eR eG eB)
+     where
 
--- | `imageColor n eR eG eB`
---   converts Exprs for Red, Green, Blue
---   into an `n * n` color image
-imageColor :: Int -> Expr -> Expr -> Expr -> Image PixelRGB8
-imageColor n eR eG eB = mkImg n (pixelRGB8 n eR eG eB)
+       * x = x_0
+
+       * f x_0 = x_1, f x_1 = x_2, f x_2 = x_3, ... f x_n = x_{n+1}
+
+       * xn = x_{n+1}
+  -}
+
+fixpointL :: (Int -> Int) -> Int -> [Int]
+fixpointL f x = error "TBD:fixpointL"
+
+-- You should see the following behavior at the prompt:
+
+-- >>> fixpointL collatz 1
+-- [1]
+-- >>> fixpointL collatz 2
+-- [2,1]
+-- >>> fixpointL collatz 3
+-- [3,10,5,16,8,4,2,1]
+-- >>> fixpointL collatz 4
+-- [4,2,1]
+-- >>> fixpointL collatz 5
+-- [5,16,8,4,2,1]
+
+-- >>> fixpointL g 0
+-- [0, 1000000, 540302, 857553, 654289, 793480,701369,763959,722102,750418,731403,744238,735604,741425,737506,740147,738369,739567,738760,739304,738937,739184,739018,739130,739054,739106,739071,739094,739079,739089,739082,739087,739083,739086,739084,739085]
+-- this is because cos 0.739085 is approximately 0.739085
+
+g :: Int -> Int
+g x = truncate (1e6 * cos (1e-6 * fromIntegral x))
+
+collatz :: Int -> Int
+collatz 1     = 1
+collatz n
+  | even n    = n `div` 2
+  | otherwise = 3 * n + 1
 
 --------------------------------------------------------------------------------
--- | Low level functions for creating pixels and images
---------------------------------------------------------------------------------
-writeImg :: (PngSavable a) => FilePath -> Image a -> IO ()
-writeImg file = writePng ("img/" ++ file)
+{- | Now refactor your implementation of `fixpointL` so that it just returns
+     the LAST element of the list, i.e. the `xn` that is equal to `f xn`
+  -}
 
--- mkImage :: V.Storable (PixelBaseComponent a) => Int -> (Int -> Int -> PixelBaseComponent a) -> Image a
-mkImage :: (Pixel a) => Int -> (Int -> Int -> PixelBaseComponent a) -> Image a
-mkImage n f = Image dim dim $ V.fromList pixels
-  where
-    dim     = 2 * n + 1
-    pixels  = [ f x y | y <- [0 .. (dim - 1)]
-                      , x <- [0 .. (dim - 1)]
-              ]
-mkImg :: (Pixel a) => Int -> (Int -> Int -> a) -> Image a
-mkImg n f = runST $ do
-  let dim = 2 * n + 1
-  img <- newMutableImage dim dim
-  forM_ [0 .. (dim - 1)] $ \x ->
-    forM_ [0 .. (dim - 1)] $ \y ->
-      writePixel img y x (f x y)
-  unsafeFreezeImage img
+fixpointW :: (Int -> Int) -> Int -> Int
+fixpointW f x = wwhile wwf x
+ where
+   wwf        = error "TBD:fixpoint:wwf"
 
-pixelRGB8 :: Int -> Expr -> Expr -> Expr -> Int -> Int -> PixelRGB8
-pixelRGB8 n eR eG eB x y = PixelRGB8 (pixel8 n eR x y)
-                                     (pixel8 n eG x y)
-                                     (pixel8 n eB x y)
-
-pixel8 :: Int -> Expr -> Int -> Int -> Pixel8
-pixel8 n e x y = toIntensity (evalFn (toReal n x) (toReal n y) e)
-
--- | `toReal n pos` converts pos in {0 .. 2n + 1} to [-1.0, 1.0]
-toReal :: Int -> Int -> Double
-toReal n pos = fromIntegral (pos - n) / fromIntegral n
-
--- | `toIntensity z` converts z in [-1.0, 1.0] to a [0, 255]
-toIntensity :: Double -> Pixel8
-toIntensity z = fromInteger (floor (127.5 + 127.5 * z))
-
---------------------------------------------------------------------------------
--- | `rand n` returns a random number between `0` and `n-1`
---------------------------------------------------------------------------------
-rand :: Int -> Int
---------------------------------------------------------------------------------
-rand n = unsafePerformIO $ do
-  v <- randomIO
-  return (v `mod` n)
+-- >>> fixpointW collatz 1
+-- 1
+-- >>> fixpointW collatz 2
+-- 1
+-- >>> fixpointW collatz 3
+-- 1
+-- >>> fixpointW collatz 4
+-- 1
+-- >>> fixpointW collatz 5
+-- 1
+-- >>> fixpointW g 0
+-- 739085
