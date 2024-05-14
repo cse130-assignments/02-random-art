@@ -14,9 +14,8 @@ import           Codec.Picture.Png
 import           Codec.Picture.Types
 import qualified Data.Vector.Storable as V
 
---------------------------------------------------------------------------------
--- | A Data Type for Grayscale Expressions -------------------------------------
---------------------------------------------------------------------------------
+-- | A data type for expressions. You will modify this in 2. d).
+
 data Expr
   = VarX
   | VarY
@@ -27,9 +26,7 @@ data Expr
   | Thresh  Expr Expr Expr Expr
   deriving (Show)
 
---------------------------------------------------------------------------------
--- | Some sample Expressions ---------------------------------------------------
---------------------------------------------------------------------------------
+-- | Some sample expressions.
 
 sampleExpr0 :: Expr
 sampleExpr0 = Sine (Average VarX VarY)
@@ -62,19 +59,7 @@ sampleExpr3 =
                   (Average (Sine VarX) (Times VarX VarX)))))))
         VarY))
 
---------------------------------------------------------------------------------
--- | Printing Expressions as Strings -------------------------------------------
---------------------------------------------------------------------------------
-
--- | `exprToString e` converts an Expr `e` into a `String` representation.
--- >>> exprToString sampleExpr0
--- "sin(pi*((x+y)/2))"
---
--- >>> exprToString sampleExpr1
--- "(x<y?x:sin(pi*x)*cos(pi*((x+y)/2)))"
---
--- >>> exprToString sampleExpr2
--- "(x<y?sin(pi*x):cos(pi*y))"
+-- | 2. a) Convert expressions to strings.
 
 exprToString :: Expr -> String
 exprToString VarX                 = "x"
@@ -85,18 +70,7 @@ exprToString (Average e1 e2)      = error "TBD:Avg"
 exprToString (Times e1 e2)        = error "TBD:Times"
 exprToString (Thresh e1 e2 e3 e4) = error "TBD:Thresh"
 
---------------------------------------------------------------------------------
--- | Evaluating Expressions at a given X, Y co-ordinate ------------------------
---------------------------------------------------------------------------------
-
--- >>> eval  0.5 (-0.5) sampleExpr0
--- 0.0
---
--- >>> eval  0.3 0.3    sampleExpr0
--- 0.8090169943749475
---
--- >>> eval  0.5 0.2    sampleExpr2
--- 0.8090169943749475
+-- | 2. b) Evaluate expressions at a given (X, Y) coordinate.
 
 eval :: Double -> Double -> Expr -> Double
 eval x y e = error "TBD:eval"
@@ -106,31 +80,7 @@ evalFn x y e = assert (-1.0 <= rv && rv <= 1.0) rv
   where
     rv       = eval x y e
 
---------------------------------------------------------------------------------
--- | Building Expressions ------------------------------------------------------
---------------------------------------------------------------------------------
---
--- >>> buildS 0
--- VarX
---
--- >>> buildS 1
--- VarY
---
--- >>> buildS 2
--- Sine (Average VarY VarX)
-
-buildS :: Int -> Expr
-buildS 0 = VarX
-buildS 1 = VarY
-buildS n = Sine (Average (buildS (n-1)) (buildS (n-2)))
-
-
---------------------------------------------------------------------------------
--- | Building Random Expressions -----------------------------------------------
---------------------------------------------------------------------------------
---  `build d` returns an Expr of depth `d`.
---  A call to `rand n` will return a random number between (0..n-1)
---  change and extend the below to produce more interesting expressions
+-- | 2. c) Build random expressions.
 
 build :: Int -> Expr
 build 0
@@ -140,9 +90,7 @@ build 0
     r         = rand 10
 build d       = error "TBD:build"
 
---------------------------------------------------------------------------------
--- | Best Image "Seeds" --------------------------------------------------------
---------------------------------------------------------------------------------
+-- | 2. c) Image seeds.
 
 -- grayscale
 g1, g2, g3 :: (Int, Int)
