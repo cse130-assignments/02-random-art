@@ -29,7 +29,7 @@ with suitable Haskell implementations.
 
 ## Assignment Testing and Evaluation
 
-All the points, will be awarded automatically, by
+All the points will be awarded automatically, by
 **evaluating your functions against a given test suite**.
 
 [Tests.hs](/tests/Test.hs) contains a very small suite
@@ -67,7 +67,7 @@ but you will not be graded on this.
 
 ## Submission Instructions
 
-Submit your code via the HW-2 assignment on Gradescope. Connect your Github account to Gradescope and select your repo. If you're in a group, don't forget to add your partner to the submission!
+Submit your code via the HW-2 assignment on Gradescope. Connect your GitHub account to Gradescope and select your repo. If you're in a group, don't forget to add your partner to the submission!
 
 Detailed instructions on how to submit your code directly from the Git repo can be found on Piazza.
 
@@ -94,7 +94,7 @@ assoc :: Int -> String -> [(String, Int)] -> Int
 such that
 
 ```haskell
-assoc def key [(k1,v1), (k2,v2), (k3,v3);...])
+assoc def key [(k1,v1), (k2,v2), (k3,v3), ...]
 ```
 
 searches the list for the first i such that `ki` = `key`.
@@ -106,7 +106,7 @@ Once you have implemented the function, you
 should get the following behavior:
 
 ```haskell
-ghci> assoc 0 "william" [("ranjit", 85), ("william",23), ("moose",44)])
+ghci> assoc 0 "william" [("ranjit",85), ("william",23), ("moose",44)]
 23
 
 ghci> assoc 0 "bob" [("ranjit",85), ("william",23), ("moose",44)]
@@ -127,6 +127,8 @@ of elements of `xs` with the duplicates, i.e.
 second, third, etc. occurrences, removed, and
 where the remaining elements appear in the same
 order as in `xs`.
+
+Your `helper` must be tail-recursive.
 
 Once you have implemented the function, you
 should get the following behavior:
@@ -153,6 +155,10 @@ such that `wwhile f x` returns `x'` where there exist values
 - for each `i` between `0` and `n-2`, we have `f v_i` equals `(true, v_i+1)`
 - `f v_n-1` equals `(false, v_n)`.
 
+In other words, `f` returns a pair where the first element
+indicates whether the loop should keep going, and the second
+element is the updated value.
+
 Your function should be tail recursive.
 
 Once you have implemented the function,
@@ -171,12 +177,18 @@ Fill in the implementation of the function
 fixpointL :: (Int -> Int) -> Int -> [Int]
 ```
 
-The expression  `fixpointL f x0` should return the list  
+A fixpoint of a function `f` is a value `x` such that `f x == x`.
+The expression `fixpointL f x0` should return the list
 `[x_0, x_1, x_2, x_3, ... , x_n]` where
 
 * `x = x_0`
 * `f x_0 = x_1, f x_1 = x_2, f x_2 = x_3, ... f x_n = x_{n+1}`
 * `xn = x_{n+1}`
+
+In other words, the list contains the results of calling `f` repeatedly
+on the preceding value, until a fixpoint `x_n` is reached.
+
+This function does not need to be tail-recursive.
 
 When you are done, you should see the following behavior:
 
@@ -207,9 +219,8 @@ The last one is because `cos 0.739085` is approximately `0.739085`.
 
 ### (e) 20 points
 
-Without using any built-in functions,
-**modify the skeleton** for `fixpointW`
-to obtain a function
+Without using any built-in functions, **modify the skeleton**
+of `fixpointW` to obtain a function
 
 ```haskell
 fixpointW :: (Int -> Int) -> Int -> Int
@@ -217,7 +228,8 @@ fixpointW :: (Int -> Int) -> Int -> Int
 
 such that `fixpointW f x` returns
 **the last element** of the list
-returned by `fixpointL f x`.
+returned by `fixpointL f x`
+(i.e. the fixpoint `x_n`).
 
 Once you have implemented the
 function, you should get the
@@ -251,8 +263,8 @@ pictures like those shown below. To do so, we shall:
 1) devise a grammar for a certain class of expressions,
 2) design a Haskell datatype whose values correspond to these expressions,
 3) write code to evaluate the expressions, and then
-4) write a function that randomly generates such expressions and plots them -- thereby
-producing random psychedelic art.
+4) write a function that randomly generates such expressions and plots them --
+thereby producing random psychedelic art.
 
 **Color Images**
 
@@ -276,9 +288,16 @@ e ::= x
 ```
 
 where pi is the constant we all learned in grade school, rounded so that it
-fits in a Dobule. All functions are over the variables
-x,y, which are guaranteed to produce a value in the range [-1,1] when x and
-y are in that range. We can represent expressions of this grammar
+fits in a Double.
+
+`(e1 < e2 ? e3 : e4)` means "if e1 is less than e2, then e3, else e4".
+The `?` and `:` syntax is the same as the C-style
+[ternary conditional operator](https://en.wikipedia.org/wiki/Ternary_conditional_operator).
+
+All functions are over the variables x,y, which are guaranteed to produce a
+value in the range [-1,1] when x and y are in that range.
+
+We can represent expressions of this grammar
 using values of the following datatype:
 
 ```haskell
@@ -381,11 +400,11 @@ Change and extend the function to generate interesting expressions `Expr`.
 - A call to `rand n` will return a random number between (0..n-1)
   Use this function to randomly select operators when
   composing subexpressions to build up larger expressions.
-  For example, in the above, at depth `0` we generate the expressions  
+  For example, in the above, at depth `0` we generate the expressions
   `VarX` and `VarY` with equal probability.
 
-- `depth` is the nesting depth: a random expression of depth `d` is
-  built by randomly composing  sub-expressions of depth `d-1` and the
+- `depth` is the maximum nesting depth. A random expression of depth `d`
+  is built by randomly composing sub-expressions of depth `d-1`. The
   only expressions of depth `0` are `VarX` and `VarY`.
 
 With this in place you can generate random art using the functions
@@ -401,8 +420,8 @@ For example, running
 ghci> emitRandomGray 150 (3, 12)
 ```
 
-will generate a gray image `img/grag_150_3_12.png` by:
-randomly generating an `Expr`  
+will generate a gray image `img/gray_150_3_12.png` by:
+randomly generating an `Expr`
 
 1. Whose  `depth` is equal to `3`,
 2. Using the **seed** value of `12`.
@@ -428,7 +447,10 @@ tips below.
 Save the parameters (i.e. the depth and the seeds)
 for your favorite three color images in the bodies of
 `c1`, `c2`, `c3` respectively, and favorite three gray
-images in `g1`, `g2` , `g3`.
+images in `g1`, `g2`, `g3`.
+
+> If your color images look gray, ensure you are using `make test`
+> and not `stack test`.
 
 ### (d) 20 points
 
@@ -441,5 +463,5 @@ are in that range, and that one of the operators take **three**
 arguments, i.e. one of the datatype constructors is of the form:
 `Ctor Expr Expr Expr`
 
-You can include images generated with these new operators
-when choosing your favorite images for part (c).
+You can (but are not required to) include images generated with
+these new operators when choosing your favorite images for part (c).
