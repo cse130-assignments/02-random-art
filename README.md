@@ -1,4 +1,4 @@
-# Assignment 2: Random Art (Points: 27 public / 160 private)
+# Assignment 2: Random Art (Points: 27 public / 133 private = 160 total)
 
 ## Overview
 
